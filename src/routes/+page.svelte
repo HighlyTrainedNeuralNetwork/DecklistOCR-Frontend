@@ -73,5 +73,5 @@ async function uploadImage() {
     </div>
 {/if}
 
-<p class="text-center absolute inset-x-0 bottom-2 text-center">You can submit bug reports by <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">opening an issue on GitHub</a>.
+<p class="text-center absolute inset-x-0 bottom-2 text-center">You can submit bug reports by <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" class="underline">opening an issue on GitHub</a>.
 </p>
