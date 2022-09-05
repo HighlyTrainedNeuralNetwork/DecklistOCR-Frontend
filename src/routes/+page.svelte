@@ -1,15 +1,18 @@
 <script>
+import { tweened } from 'svelte/motion';
+import { cubicOut } from 'svelte/easing';
+const progress = tweened(0, {
+		duration: 9000,
+		easing: cubicOut
+	});
 let input;
 let imageBase64 = null;
-let loaded = false;
 let error = "";
-// let loaded = true;
+let loading = false;
+
 let executionTime = 0;
-// let executionTime = 7.55;
 let cardsFound = 0;
-// let cardsFound = 74;
 let decklist = "";
-// let decklist = "2 Hall of Storm Giants \n4 Consider \n4 Ledger Shredder \n4 Pieces of the Puzzle \n4 Arclight Phoenix \n4 Treasure Cruise \n4 Spirebluff Canal \n3 Fiery Impulse \n4 Lightning Axe \n";
 function readImage(input) {
     let file = input.target.files[0];
     let reader = new FileReader();
@@ -20,8 +23,9 @@ function readImage(input) {
 }
 async function uploadImage() {
     input.value = "";
-    loaded = false;
+    loading = true;
     error = "";
+    progress.set(1);
     try {
       const response = await fetch("/scan",
       {
@@ -45,11 +49,16 @@ async function uploadImage() {
       decklist = data.split("\n");
       decklist.splice(0,2);
       decklist = decklist.join("\n");
-      loaded = true;
+      loading = false;
     } catch (error) {
       error = "Something went unexpectedly wrong."
       return error
     }
+}
+async function copyToClipboard() {
+  if (navigator && navigator.clipboard && navigator.clipboard.writeText)
+    return navigator.clipboard.writeText(decklist);
+  return Promise.reject('The Clipboard API is not available.');
 }
 </script>
 
@@ -61,15 +70,24 @@ async function uploadImage() {
   <button on:click={uploadImage} disabled={imageBase64 == null || input.value == ""} class="h-10 px-6 font-semibold rounded-md border border-black text-slate-900 bg-gray-300 disabled:bg-white">Scan Image</button>
 </div>
 
+{#if loading}
+<progress class="w-full bg-orange orange" value={$progress}></progress>
+{/if}
+
 {#if error}
   <div class="text-center">
     <p>{error}</p>
   </div>
-{:else if loaded}
+{:else if !loading && cardsFound}
     <div class="text-center">
       <p>Found {cardsFound} cards in {executionTime} seconds</p>
     </div>
-    <div contenteditable="true" spellcheck="false" bind:innerHTML="{decklist}" class="whitespace-pre-wrap pb-6 w-2/5	ml-auto mr-auto border-black">
+    <div class="group">
+      <div class="w-2/5 ml-auto mr-auto relative border-black rounded-md border-2">
+        <div contenteditable="true" spellcheck="false" bind:innerHTML="{decklist}" class="max-h-128 overflow-y-auto whitespace-pre-wrap outline-none">
+        </div>
+        <input type="image" src="/content_paste.png" alt="copyToClipboard" on:click={copyToClipboard} class="absolute top-0 right-6 hidden group-hover:block">
+      </div>
     </div>
 {/if}
 
